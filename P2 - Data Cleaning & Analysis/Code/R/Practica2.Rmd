@@ -1,0 +1,1195 @@
+---
+title: "Limpieza y análisis de datos"
+subtittle: "Tipología y Ciclo de Vida de los Datos"
+author:
+- Javier Gómez de Diego
+date: Diciembre 2021
+output:
+  prettydoc::html_pretty:
+    df_print: paged
+    toc: true
+    toc_depth: 5
+    theme: cayman
+    highlight: github
+---
+```{css my-header-colors, echo = FALSE}
+.page-header {
+    color: #ffffff;
+    background-image: linear-gradient(120deg, #ff5400, #ffaf8a);
+}
+.project-author {
+  color: #ffffff;
+  opacity: .9
+}
+.project-date {
+  color: #ffffff;
+  opacity: .8
+}
+.toc .toc-box {
+  background-image: linear-gradient(120deg, #ff5400, #ffaf8a);
+  border: solid 1px #ffff;
+}
+.toc .toc-box > ul {
+  color: #ffff;
+}
+.main-content h1 {
+  color: #ff5400;
+  opacity: .9
+}
+.main-content h2 {
+  color: #ff5400;
+  opacity: .8
+}
+.main-content h3 {
+  color: #ff5400;
+  opacity: .7
+}
+.main-content h4 {
+  color: #ff5400;
+  opacity: .6
+}
+.main-content h5 {
+  color: #ff5400;
+  opacity: .5
+}
+.main-content pre {
+  background-color: #faf5f2;
+  border: solid 1px #ffff;
+
+}
+.main-content pre > code {
+  color: #716760;
+}
+.main-content table th {
+  background-color: #ff5400;
+  color: #ffffff;
+  opacity: .8
+}
+.pagedtable-header-type {
+    color: #ffffff;
+    opacity: .8
+}
+.main-content table td {
+  color: #716760;
+}
+.main-content table tr:nth-child(odd) {
+  background-color: #f7f6f5;
+}
+.main-content table tr:nth-child(even) {
+  background-color: #ff;
+}
+body {
+  color: #716760;
+}
+a {
+  color: #ffffff;
+}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Carga del dataset**
+
+```{r}
+library(readr)
+d <- read.csv("activities2.csv", sep=",", encoding="UTF-8")
+head(d)
+```
+
+# **Limpieza**
+
+Tras un primer vistazo, eliminamos las siguientes variables que no son significativas para el estudio planteado:
+
+- ***ID.de.actividad***: Este *ID* solo es útil para conocer la referencia de la actividad en la web de *Strava*, por lo que no aporta información.
+- ***Nombre.de.la.actividad***: No aporta información relevante para el estudio ya que es el título que *Strava* pone por defecto en las publicaciones.
+- ***Descripción.de.la.actividad***: Esta variable correponde al campo de descripción de la publicación en la red social. Como se puede observar, *R* lo interpreta como *<lgl>* pues únicamente contiene valores vacíos *NA*. En caso contrario, se interpretaría como *<chr>*.
+- ***Desplazamiento***: Indica si la actividad está marcada como *desplazamiento* en la red social, por lo que no es interesante para el objetivo de este estudio.
+- ***Nombre.del.archivo***: Nombre del archivo original de la actividad. No es útil ya que no se va a necesitar referenciar los archivos.
+- ***Peso.del.deportista***: La mayoría de valores están vacíos, por lo que no aporta información relevante
+- ***Peso.de.la.bicicleta***: Cada actividad de ciclismo tiene asociada una bicicleta, que a su vez tiene distintos campos datos como el de su peso. Para acotar el estudio y evaluar solo las variables relacionadas con la evolución deportiva, se omitirá este atributo que, obviamente, solo se muestra en algunas actividades de ciclismo.
+- ***Tiempo.transcurrido.1***: Derivada de la variables *Tiempo.transcurrido*. No aporta más información al conjunto de datos.
+- ***Distancia.1***: Derivada de la variables *Distancia*. No aporta más información al conjunto de datos.
+- ***Pérdida.de.desnivel***: El valor de esta variable es despreciable ya que la gran mayoría de actividades que cuentan con este dato empiezan y terminan en el mismo lugar, por lo que no aporta información.
+- ***Desnivel.bajo***: se elimina para acotar el alcance del estudio, ya que no aporta información esencial para el objetivo.
+- ***Desnivel.alto***: se elimina para acotar el alcance del estudio, ya que no aporta información esencial para el objetivo.
+- ***Pendiente.positiva.promedio***: Esta variable está vacía.
+- ***Pendiente.negativa.promedio***: Esta variable está vacía.
+- ***Ritmo.cardiaco.máximo.1***: Derivada de la variables *Ritmo.cardiaco.máximo*. No aporta más información al conjunto de datos.
+- ***Vatios.máx.***: Esta variable está vacía.
+- ***Vatios.promedio***: Un altísimo porcentaje de actividades tienen este atrinuto vacío, y las pocas que tienen un valor se trata de una estimación reaalizada por la aplicación, por lo que no aporta información.
+- ***Temperatura.máx.***: Esta variable está vacía.
+- ***Temperatura.promedio***: Muy pocas actividades cuentan con esta variable, por lo que la eliminamos para reducir la extensión del estudio.
+- ***Esfuerzo.Relativo.1***: Derivada de la variables *Esfuerzo.Relativo*. No aporta más información al conjunto de datos.
+- ***Trabajo.total***: Un altísimo porcentaje de actividades tienen este atrinuto vacío, por lo que no aporta información.
+- ***Número.de.carreras***: Esta variable está vacía.
+- ***Tiempo.en.ascenso***: Esta variable está vacía.
+- ***Tiempo.en.descenso***: Esta variable está vacía.
+- ***Otro.tiempo***: Esta variable está vacía.
+- ***Esfuerzo.Percibido***: Derivada de la variable *Esfuerzo.relativo*; ofrece menos información y la eliminamos para acotar el alcance del estudio.
+- ***Type***: Esta variable está vacía.
+- ***Start.Time***: Esta variable está vacía.
+- ***Potencia.promedio.ponderada***: Un altísimo porcentaje de actividades tienen este atrinuto vacío, por lo que no aporta información.
+- ***Recuento.de.potencia***: Un altísimo porcentaje de actividades tienen este atrinuto vacío, por lo que no aporta información.
+- ***Usar.Esfuerzo.Percibido***: Derivada de la variable *Esfuerzo.Percibido*; se elimina para acotar el alcance del estudio, ya que no aporta información esencial.
+- ***Esfuerzo.Relativo.percibido***: Eliminamos esta variable porque no aporta información relevante.
+- ***Desplazamiento.1***: Derivada de la variable *Desplazamiento*, también eliminada.
+- ***Peso.total.levantado***: Esta variable está vacía.
+- ***Desde.la.carga***: No aporta información útil al estudio.
+- ***Distancia.ajustada.en.pendientes***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Hora.de.observación.meteorológica***: No aporta información útil al estudio.
+- ***Condición.meteorológica***: No aporta información útil al estudio.
+- ***Temperatura.meteorológica***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Temperatura.aparente***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Punto.de.rocío***: No aporta información útil al estudio.
+- ***Humedad***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Presión.meteorológica***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Velocidad.del.viento***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Ráfaga.de.viento***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Dirección.del.viento***: No aporta información útil al estudio.
+- ***Intensidad.de.precipitación***: No aporta información útil al estudio.
+- ***Hora.del.amanecer***: No aporta información útil al estudio.
+- ***Hora.del.atardecer***: No aporta información útil al estudio.
+- ***Fase.lunar***: No aporta información útil al estudio.
+- ***Bicicleta***: Es el ID del equipamiento de las actividades de tipo *Bicicleta* y *Bicicleta virtual* que enlaza con el objeto en *Strava*. Por lo tanto, no aporta información útil.
+- ***Equipamiento***: Esta variable está vacía.
+- ***Probabilidad.de.precipitación***: No aporta información útil al estudio.
+- ***Tipo.de.precipitación***: No aporta información útil al estudio.
+- ***Nubosidad***: No aporta información útil al estudio.
+- ***Visibilidad.meteorológica***: No aporta información útil al estudio.
+- ***Índice.UV***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Ozono.meteorológico***: No aporta información útil para el objetivo del estudio ya que tan solo unas pocas actividades cuentan con este dato.
+- ***Jump.Count***: Esta variable está vacía.
+- ***Total.Grit***: Esta variable está vacía.
+- ***Avg.Flow***: Esta variable está vacía.
+- ***Flagged***: No aporta información útil al estudio.
+- ***Avg.Elapsed.Speed***: No aporta información útil al estudio.
+- ***Dirt.Distance***: No aporta información útil al estudio.
+
+```{r}
+d <- subset(d, select = -c(ID.de.actividad, Nombre.de.la.actividad, Descripción.de.la.actividad, Desplazamiento, Nombre.del.archivo, Peso.del.deportista, Peso.de.la.bicicleta, Tiempo.transcurrido.1, Distancia.1, Pérdida.de.desnivel, Desnivel.bajo, Desnivel.alto, Pendiente.positiva.promedio, Pendiente.negativa.promedio, Ritmo.cardiaco.máximo.1, Vatios.máx., Vatios.promedio, Temperatura.máx., Temperatura.promedio, Esfuerzo.Relativo.1, Trabajo.total, Número.de.carreras, Tiempo.en.ascenso, Tiempo.en.descenso, Otro.tiempo, Esfuerzo.Percibido, Type, Start.Time, Potencia.promedio.ponderada, Recuento.de.potencia, Usar.Esfuerzo.Percibido, Esfuerzo.Relativo.percibido, Desplazamiento.1, Peso.total.levantado, Desde.la.carga, Distancia.ajustada.en.pendientes, Hora.de.observación.meteorológica, Condición.meteorológica, Temperatura.meteorológica, Temperatura.aparente, Punto.de.rocío, Humedad, Presión.meteorológica, Velocidad.del.viento, Ráfaga.de.viento, Dirección.del.viento, Intensidad.de.precipitación, Hora.del.amanecer, Hora.del.atardecer, Fase.lunar, Bicicleta, Equipamiento, Probabilidad.de.precipitación, Tipo.de.precipitación, Nubosidad, Visibilidad.meteorológica, Índice.UV, Ozono.meteorológico, Jump.Count, Total.Grit, Avg.Flow, Flagged, Avg.Elapsed.Speed, Dirt.Distance))
+tail(d)
+```
+
+## **Adecuación de variables y tratamiento de datos vacíos y *outliers***
+
+### *Fecha.de.la.actividad*
+
+```{r}
+summary(d$Fecha.de.la.actividad)
+```
+
+
+Convertimos la variable ***Fecha.de.la.actividad*** de formato *characterr* a un formato de fecha. Para ello, se utilizará la función *as.POSIXct* debido a la complejidad del formato original. Esta función puede provocar valores vacíos *NA* si no se interpreta correctamente algún dato.
+
+```{r}
+sum(is.na(as.POSIXct(d$Fecha.de.la.actividad,format="%d %b %Y %H:%M:%S",tz='UTC')))
+```
+
+Hay *133* valores vacíos en el *output* de la función.
+
+```{r}
+head(d[is.na(as.POSIXct(d$Fecha.de.la.actividad,format="%d %b %Y %H:%M:%S",tz='UTC')),'Fecha.de.la.actividad'])
+tail(d[is.na(as.POSIXct(d$Fecha.de.la.actividad,format="%d %b %Y %H:%M:%S",tz='UTC')),'Fecha.de.la.actividad'])
+```
+
+Los valores vacíos se deben al formato del mes de septiembre, que contiene 5 caractéres. Para solucionarlo, hay que eliminar un carácter. 
+
+```{r}
+d[is.na(as.POSIXct(d$Fecha.de.la.actividad,format="%d %b %Y %H:%M:%S",tz='UTC')),'Fecha.de.la.actividad'] <- sub("([A-Za-z]{3})[a-z]", "\\1", d[is.na(as.POSIXct(d$Fecha.de.la.actividad,format="%d %b %Y %H:%M:%S",tz='UTC')),'Fecha.de.la.actividad'])
+d$Fecha.de.la.actividad <- as.POSIXct(d$Fecha.de.la.actividad,format="%d %b %Y %H:%M:%S",tz='UTC')
+d$Fecha.de.la.actividad <- as.Date(d$Fecha.de.la.actividad)
+summary(d$Fecha.de.la.actividad)
+```
+
+### *Tipo.de.actividad*
+
+```{r}
+summary(d$Tipo.de.actividad)
+```
+
+Convertimos la variable ***Tipo.de.actividad*** y vemos los distintos tipos de actividades que hay en el *dataset*.
+
+```{r}
+d$Tipo.de.actividad <- as.factor(d$Tipo.de.actividad)
+summary(d$Tipo.de.actividad)
+```
+
+La actividad de tipo *Carrera virtual* podría estar mal etiquetada. Para averiguarlo, la analizamos detenidamente comparándola con una de tipo *Bicicleta virtual*.
+
+```{r}
+d[d$Tipo.de.actividad=='Carrera virtual',]
+d[441,]
+```
+
+Efectivamente, debería estar etiquetada como *Bicicleta virtual* según sus atributos.
+
+```{r}
+d$Tipo.de.actividad[d$Tipo.de.actividad=='Carrera virtual'] <- 'Bicicleta virtual'
+d$Tipo.de.actividad <- factor(d$Tipo.de.actividad)
+summary(d$Tipo.de.actividad)
+```
+
+
+### *Tiempo.transcurrido*
+
+```{r}
+summary(d$Tiempo.transcurrido)
+```
+
+La unidad de esta variable es el segundo. Para que sea más interpretable, la convertimos al formato *Horas Minutos Segundos*
+
+```{r}
+library(lubridate)
+d$Tiempo.transcurrido <- seconds_to_period(d$Tiempo.transcurrido)
+```
+
+
+```{r}
+summary(d$Tiempo.transcurrido)
+```
+
+### *Tiempo.en.movimiento*
+
+Es el tiempo de ejercicio efectivo de cada actividad.
+
+```{r}
+summary(d$Tiempo.en.movimiento)
+```
+
+La unidad de esta variable es el segundo. Para que sea más interpretable, la convertimos al formato *Horas Minutos Segundos*.
+
+```{r}
+d$Tiempo.en.movimiento <- seconds_to_period(d$Tiempo.en.movimiento)
+summary(d$Tiempo.en.movimiento)
+```
+
+### ***Tiempo.de.descanso***
+
+Por un lado, tenemos *Tiempo.en.movimiento* y *Tiempo.transcurrido*. Por lo tanto, podemos calcular el tiempo de descanso obteniendo la diferencia entre ambas variables.
+
+```{r}
+d$Tiempo.de.descanso <- period_to_seconds(d$Tiempo.transcurrido) - period_to_seconds(d$Tiempo.en.movimiento)
+d$Tiempo.de.descanso <- seconds_to_period(d$Tiempo.de.descanso)
+summary(d$Tiempo.de.descanso)
+```
+
+### *Distancia*
+
+```{r}
+summary(d$Distancia)
+```
+
+Convertimos la variable ***Distancia*** en *double*. Para ello, hay que cambiar los separadores decimales de ***,*** a ***.***
+
+```{r}
+d$Distancia <- as.numeric(gsub(",", ".", gsub("\\.", "", d$Distancia)))
+summary(d$Distancia)
+```
+
+Hay una actividad cuya distancia máxima es ***1350***Km. Puede deberse a un error, por lo que hay que analizar de qué se trata.
+
+```{r}
+d[d$Distancia==max(d$Distancia),]
+```
+
+Se trata de la actividad de tipo ***Natación***, cuya unidad de distancia es el metro, no el kilómetro. Por ello, se pasa a la unidad correspondiente.
+
+```{r}
+d[d$Tipo.de.actividad=='Natación',]$Distancia <- d[d$Tipo.de.actividad=='Natación',]$Distancia / 1000
+summary(d$Distancia[d$Distancia!=0])
+```
+
+Muchos datos vacíos pueden estar camuflados como *0*, por lo que vamos a analizar el tipo de actividad de estos registros.
+
+```{r}
+summary(d$Tipo.de.actividad[d$Distancia==0])
+d[(d$Distancia==0 & d$Tipo.de.actividad=='Entrenamiento'),]
+```
+
+La actividad etiquetada como *Entrenamiento* se encuentra mal etiquetada ya que, por sus atributos, encajaría mejor en *Entrenamiento con pesas*.
+
+```{r}
+d$Tipo.de.actividad[d$Distancia==0 & d$Tipo.de.actividad=='Entrenamiento'] <- 'Entrenamiento con pesas'
+summary(d$Tipo.de.actividad[d$Distancia==0])
+```
+
+Para imputar la distancia a las actividades de tipo ***Bicicleta***, analizaremos el tiempo de la atividad y la velocidad promedio.
+
+```{r}
+d[(d$Distancia==0 & d$Tipo.de.actividad=='Bicicleta'),]
+```
+
+Muchas de estas actividades deberían estar etiquetadas como *Bicicleta virtual*; en concreto, aquellas con una duración inferior a 2 horas.
+
+```{r}
+d$Tipo.de.actividad[(d$Distancia==0 & d$Tipo.de.actividad=='Bicicleta' & period_to_seconds(d$Tiempo.en.movimiento) < 7200)] <- 'Bicicleta virtual'
+summary(d$Tipo.de.actividad[d$Distancia==0])
+```
+
+Para realizar la imputación, calculamos la media de la velocidad promedio del resto de actividades de tipo *Bicicleta* y *Bicicleta virtual* y la multiplicamos por el tiempo de duración de estas actividades.
+
+```{r}
+for(i in c('Bicicleta', 'Bicicleta virtual')){
+    index <- d$Distancia==0 & d$Tipo.de.actividad==i
+    if(sum(index)>0){
+      d$Distancia[index] <- ((mean(d$Velocidad.promedio[d$Tipo.de.actividad==i & d$Distancia>0 & d$Velocidad.promedio!=0], na.rm=TRUE)) * (period_to_seconds(d$Tiempo.en.movimiento[index]))) / 1000
+    }
+}
+summary(d$Distancia)
+```
+
+
+### *Ritmo.cardiaco.máximo*
+
+```{r}
+summary(d$Ritmo.cardiaco.máximo)
+```
+
+La variable *Ritmo.cardiaco.máximo* tiene algunos valores vacíos ya que algunas actividades fueron realizadas sin el sensor correspondiente. Para solucionarlo, calcularemos el valor medio de esta variable por cada tipo de actividad y lo imputaremos a los valores vacíos de la actividad correspondiente.
+
+```{r}
+imputar.media.por.tipo <- function(variable){
+  for(i in levels(d$Tipo.de.actividad)){
+    index <- is.na(variable) & d$Tipo.de.actividad==i
+    if(sum(index)>0){
+      variable[index] <- as.integer(mean(variable[d$Tipo.de.actividad==i], na.rm=TRUE))
+    }
+  }
+  return(variable)
+}
+
+d$Ritmo.cardiaco.máximo <- imputar.media.por.tipo(d$Ritmo.cardiaco.máximo)
+summary(d$Ritmo.cardiaco.máximo)
+```
+
+### *Ritmo.cardiaco.promedio*
+
+La convertimos en *integer*.
+
+```{r}
+d$Ritmo.cardiaco.promedio <- as.integer(d$Ritmo.cardiaco.promedio)
+summary(d$Ritmo.cardiaco.promedio)
+```
+
+Para imputar los valores vacíos, seguiremos los mismos pasos que con la variable *Ritmo.cardiaco.máximo*.
+
+```{r}
+d$Ritmo.cardiaco.promedio <- imputar.media.por.tipo(d$Ritmo.cardiaco.promedio)
+summary(d$Ritmo.cardiaco.promedio)
+```
+
+
+### *Esfuerzo.Relativo*
+
+La convertimos a tipo *integer*.
+
+```{r}
+d$Esfuerzo.Relativo <- as.integer(d$Esfuerzo.Relativo)
+summary(d$Esfuerzo.Relativo)
+```
+
+El valor de esta variable es calculado por *Strava* teniendo en cuenta múltiples variables y cálculos desconocidos. Por ello, no podemos realizar imputaciones a los valores vacíos de forma más o menos precisa, por lo que los dejamos así.
+
+### *Equipamiento.de.la.actividad*
+
+Esta variable muestra la bicicleta usada para las actividades de tipo *Bicicleta* y *Bicicleta virtual*.
+
+```{r}
+summary(d$Equipamiento.de.la.actividad)
+```
+
+La convertimos a tipo *factor*.
+
+```{r}
+d$Equipamiento.de.la.actividad <- as.factor(d$Equipamiento.de.la.actividad)
+summary(d$Equipamiento.de.la.actividad)
+```
+
+### *Velocidad.máxima*
+
+```{r}
+summary(d$Velocidad.máxima)
+```
+
+Hay una actividad con un valor vacío en esta variable. Veamos cuál es.
+
+```{r}
+d[which(is.na(d$Velocidad.máxima)),]
+```
+
+Por alguna razón desconocida, esta actividad tiene como valor vacío esta variable. Para solucionarlo, calcularemos la media de todos los valores de este atributo de las actividades de tipo *Bicicleta* y se lo imputaremos.
+
+```{r}
+d$Velocidad.máxima <- imputar.media.por.tipo(d$Velocidad.máxima)
+summary(d$Velocidad.máxima)
+```
+
+Ahora ya podemos pasar las unidades de *m/s* a ***km/h***.
+
+```{r}
+d$Velocidad.máxima <- d$Velocidad.máxima * 3.6
+summary(d$Velocidad.máxima[d$Velocidad.máxima!=0])
+```
+
+### *Velocidad.promedio*
+
+```{r}
+summary(d$Velocidad.promedio)
+```
+
+En este caso hay un gran número de registros con valores vacíos, mayor que los del atributo *Velocidad.maxima*. Esto se puede deber a que las actividades que no recogen datos de movimiento muestran valores vacíos en esta variable y *0* en la anterior.
+
+```{r}
+summary(d$Tipo.de.actividad[is.na(d$Velocidad.promedio)])
+```
+
+Efectivamnete, actividades como *Entrenamiento con pesas* tienen este atributo vacío. Sin embargo, también hay actividades de tipo *Bicicleta* y *Bicicleta virtual* que sí deberían contar con este valor. Para realizar la imputación, calcularemos la velocidad media dividiendo la distancia total recorrida entre el tiempo total de la actividad. Para las actividades de tipo *Entrenamiento con pesas* imputaremos el valor 0, ya que no se recorre ninguna distancia. Las unidades se encuentran en *m/s*, por lo que las convertiremos a *km/h* posteriormente.
+
+```{r}
+for(i in c('Bicicleta', 'Bicicleta virtual', 'Caminata', 'Entrenamiento', 'Natación')){
+    index <- is.na(d$Velocidad.promedio) & d$Tipo.de.actividad==i
+    if(sum(index)>0){
+      d$Velocidad.promedio[index] <- (d$Distancia[index]*1000) / period_to_seconds(d$Tiempo.en.movimiento[index])
+    }
+}
+d$Velocidad.promedio[is.na(d$Velocidad.promedio) & d$Tipo.de.actividad=='Entrenamiento con pesas'] <- 0
+summary(d$Tipo.de.actividad[is.na(d$Velocidad.promedio)])
+```
+
+Convertimos a *km/h*.
+
+```{r}
+d$Velocidad.promedio <- d$Velocidad.promedio * 3.6
+summary(d$Velocidad.promedio[d$Velocidad.promedio!=0])
+```
+
+
+### *Desnivel.positivo*
+
+En esta variable solo nos fijaremos en las actividades de *Bicicleta*, *Caminata* y *Carrera* (además de alguna de *Bicicleta virtual*, pero no las tendremos en cuenta), ya que son las únicas en las que este atributo es relevante.
+
+```{r}
+summary(d$Tipo.de.actividad[d$Desnivel.positivo==0 | is.na(d$Desnivel.positivo)])
+```
+
+Para realizar una posible imputación, debemos analizar los atributos con valores vacíos del tipo de actividad *Bicicleta*.
+
+```{r}
+d[(d$Desnivel.positivo==0 | is.na(d$Desnivel.positivo)) & d$Tipo.de.actividad=='Bicicleta',]
+```
+
+La actividad *1028* está mal etiquetada, ya que debería ser *Bicicleta virtual* debido a sus atributos.
+
+```{r}
+d$Tipo.de.actividad[1028] <- 'Bicicleta virtual'
+```
+
+El desnivel de una actividad de tipo *Bicicleta* suele depender de su atributo *Distancia*. Por ello, calcularemos la media del valor resultante de dividir el desnivel entre la distancia de las actividades, lo multiplicaremos por la distancia de estas actividades y se lo imputaremos a los valores vacíos.
+
+```{r}
+d$Desnivel.positivo[(d$Desnivel.positivo==0 | is.na(d$Desnivel.positivo)) & d$Tipo.de.actividad=='Bicicleta'] <- mean(d$Desnivel.positivo[d$Tipo.de.actividad=='Bicicleta' & d$Desnivel.positivo>0 & d$Distancia>0] / d$Distancia[d$Tipo.de.actividad=='Bicicleta' & d$Distancia>0 & d$Desnivel.positivo>0], na.rm=TRUE) * d$Distancia[(d$Desnivel.positivo==0 | is.na(d$Desnivel.positivo)) & d$Tipo.de.actividad=='Bicicleta']
+summary(d$Tipo.de.actividad[d$Desnivel.positivo==0 | is.na(d$Desnivel.positivo)])
+summary(d$Desnivel.positivo)
+```
+
+### *Pendiente.máxima*
+
+```{r}
+summary(d$Tipo.de.actividad[is.na(d$Pendiente.máxima)])
+```
+
+No hay forma de imputar de forma aproximada el valor vacío a esta actividad, ya que esto depende del terreno donde se ha realizado, y no disponemos de esa información. Por lo tanto le asignaremos el valor *0*.
+
+```{r}
+d$Pendiente.máxima[is.na(d$Pendiente.máxima)] <- 0
+summary(d$Pendiente.máxima)
+```
+
+Analizamos los valores extremos, ya que pueden deberse a errores de lectura del terreno por parte del GPS. Generalmente, un valor de pendiente por encima del 40% no es realista para ciclismo de carretera. Podemos diferenciar las actividades de ciclismo de carretera y de montañapor la bicicleta usada (*Orbea Satellite* para montaña y el resto para carretera).
+
+```{r}
+summary(d$Tipo.de.actividad[d$Pendiente.máxima>40])
+```
+
+
+A todas las actividades de ciclismo de carretera cuya pendiente máxime supere el 40% les asignaremos este mismo valor. Para todas las actividades de tipo *Entrenamiento* y *Caminata* haremos lo mismo.
+
+```{r}
+d$Pendiente.máxima[d$Pendiente.máxima>40 & d$Equipamiento.de.la.actividad!='Orbea Satellite'] <- 40
+```
+
+### *Pendiente.promedio*
+
+```{r}
+summary(d$Pendiente.promedio)
+```
+
+La gran mayoría de actividades finalizan, aproximadamente, en el mismo punto en el que empiezan. Por lo tanto, la pendiente media tiende a *0*. Por ello, analizaremos las actividades con una pendiente media mayor que el 2% y menor que el -2%.
+
+```{r}
+d[abs(d$Pendiente.promedio)>2,]
+```
+
+Para saber si se deben a errores de lectura de los datos de GPS, asignaremos el valor *0* a las actividades cuyo ratio distancia/desnivel sea mayor a *0.02*, ya que estas son las que mayor probabilidad tienen de tener datos incorrectos.
+
+```{r}
+# Esta actividad no crresponde a ninguna actividad deportiva, por lo que se elimina
+d <- d[-c(70),]
+
+index <- (d$Distancia[abs(d$Pendiente.promedio)>2] / d$Desnivel.positivo[abs(d$Pendiente.promedio)>2]) > 0.02 
+d$Pendiente.promedio[abs(d$Pendiente.promedio)>2][index] <- 0
+summary(d$Pendiente.promedio)
+```
+
+### *Cadencia.máx.*
+
+```{r}
+summary(d$Cadencia.máx.)
+summary(d$Tipo.de.actividad[is.na(d$Cadencia.máx.)])
+```
+
+En cuanto a los valores vacíos, no tiene sentido imputar valores a las actividades de *Bicicleta*, *Bicicleta virtual*, *Carrera*, *Caminata* y *Entrenamiento* (las otras deben tener este valor vacío) ya que, en este caso, no se pueden hacer extrapolaciones reales basadas en otros atributos.
+
+```{r}
+length(d$Cadencia.máx.[!is.na(d$Cadencia.máx.) & (d$Tipo.de.actividad=='Entrenamiento con pesas' | d$Tipo.de.actividad=='Natación')])
+```
+
+Sin embargo, existen valores extremos que hay que estudiar.
+
+```{r}
+summary(d$Cadencia.máx.[(d$Tipo.de.actividad=='Bicicleta' | d$Tipo.de.actividad=='Bicicleta virtual') & !is.na(d$Cadencia.máx.)])
+```
+
+El rango de valores que toma la variable para las actividades de tipo *Bicicleta* y *Bicicleta virtual* es correcto, por lo que no es necesario hacer nada más.
+
+### *Cadencia.promedio*
+
+Esta variable se tratará de igual forma que la anterior.
+
+```{r}
+summary(d$Cadencia.promedio)
+summary(d$Tipo.de.actividad[is.na(d$Cadencia.promedio)])
+```
+
+Hay una actividad cuya cadencia máxima es un valor vacío pero su cadencia media tiene un valor asignado.
+
+```{r}
+d$Cadencia.promedio[is.na(d$Cadencia.máx.) & !is.na(d$Cadencia.promedio)]
+```
+
+Como el valor es *0* para la cadencia media, y siendo un valor vacío la cadencia máxima, la asignamos el valor vacío a *Cadencia.promedio* para esta actividad.
+
+```{r}
+d$Cadencia.promedio[d$Cadencia.promedio==0 & !is.na(d$Cadencia.promedio)] <- NA
+```
+
+
+```{r}
+length(d$Cadencia.promedio[!is.na(d$Cadencia.promedio) & (d$Tipo.de.actividad=='Entrenamiento con pesas' | d$Tipo.de.actividad=='Natación')])
+```
+
+```{r}
+summary(d$Cadencia.promedio[(d$Tipo.de.actividad=='Bicicleta' | d$Tipo.de.actividad=='Bicicleta virtual') & !is.na(d$Cadencia.promedio)])
+```
+
+Ese valor mínimo no es realista, por lo que estudiamos a ver de qué se trata.
+
+```{r}
+d[(d$Tipo.de.actividad=='Bicicleta' | d$Tipo.de.actividad=='Bicicleta virtual') & !is.na(d$Cadencia.promedio) & d$Cadencia.promedio==min(d$Cadencia.promedio[(d$Tipo.de.actividad=='Bicicleta' | d$Tipo.de.actividad=='Bicicleta virtual') & !is.na(d$Cadencia.promedio)]),]
+```
+
+Al ser una actividad de tipo *Bicicleta*, ese valor irreal de cadencia se puede deber a un fallo del sensor. Por ello, le asignaremos el valor medio de este tipo de actividades.
+
+```{r}
+d$Cadencia.promedio[d$Tipo.de.actividad=='Bicicleta' & !is.na(d$Cadencia.promedio) & d$Cadencia.promedio==min(d$Cadencia.promedio[d$Tipo.de.actividad=='Bicicleta' & !is.na(d$Cadencia.promedio)])] <- mean(d$Cadencia.promedio[d$Tipo.de.actividad=='Bicicleta' & !is.na(d$Cadencia.promedio)])
+summary(d$Cadencia.promedio[(d$Tipo.de.actividad=='Bicicleta' | d$Tipo.de.actividad=='Bicicleta virtual') & !is.na(d$Cadencia.promedio)])
+```
+
+Ahora, el rango de valores que toma la variable para las actividades de tipo *Bicicleta* y *Bicicleta virtual* es correcto, por lo que no es necesario hacer nada más.
+
+### *Calorías*
+
+La convertimos en tipo *integer*.
+
+```{r}
+d$Calorías <- as.integer(d$Calorías)
+summary(d$Calorías)
+summary(d$Tipo.de.actividad[is.na(d$Calorías)])
+```
+
+Las calorías consumidas se estiman teniendo en cuenta varias variables en tiempo real mientra se realiza la actividad. Para imputar los valores vacíos, haremos una aproximación utilizando los atributos *Ritmo.cardiaco.promedio* y *Tiempo.en.movimiento*. Primero, estudiaremos la correlación de la variable *Calorías* con el producto de estas dos variables ya que, a priori, tiene sentido pensar que las calorías consumidas en una actividad tienen una dependencia lineal con el esfuerzo (*Ritmo.cardíaco.promedio*) por el tiempo (*Tiempo.en.movimiento*).
+
+#### Test de correlación
+
+Realizamos un test de correlación de *Pearson*.
+
+```{r}
+cor(d$Calorías[!is.na(d$Calorías)],
+    (d$Ritmo.cardiaco.promedio[!is.na(d$Calorías)] * period_to_seconds(d$Tiempo.en.movimiento[!is.na(d$Calorías)])),
+    method='pearson')
+```
+
+Con un coeficiente de correlación de ***0.928*** vemos que la correlación entre las variables es muy alta. Por lo tanto, construiremos un modelo de regresión lineal para estimar los valores vacíos de *Calorías* a partir de los datos conocidos de las otras dos variables.
+
+#### Regresión lineal para imputación de valores
+
+```{r}
+for(i in levels(d$Tipo.de.actividad)){
+  index <- d$Tipo.de.actividad==i & !is.na(d$Calorías)
+  ratio <- period_to_seconds(d$Tiempo.en.movimiento[index]) * d$Ritmo.cardiaco.promedio[index]
+  if(sum(index)>1){
+    rl <- lm(d$Calorías[index] ~ ratio)
+    ypred <- rl$fitted.values
+    plot(ratio,
+         d$Calorías[index],
+         main = paste('Regresión lineal: ', i),
+         xlab = '(Ritmo cardíaco * Tiempo en movimiento)',
+         ylab = 'Calorías',
+         pch = 19,
+         cex = .5,
+         col = 'light blue',
+         frame = FALSE)
+    lines(ratio,
+          ypred,
+          lwd = 2.5,
+          col = "#fc5200")
+    }
+}
+```
+
+```{r}
+ratio <- period_to_seconds(d$Tiempo.en.movimiento[!is.na(d$Calorías)]) * d$Ritmo.cardiaco.promedio[!is.na(d$Calorías)]
+rl <- lm(d$Calorías[!is.na(d$Calorías)] ~ ratio)
+summary(rl)
+```
+
+La variable *Calorías* está explicada en mayor medida por el producto de las variables *Ritmo.cardiaco.promedio* y *Tiempo.en.movimiento* ($R^{2}$ = *0.86*), por lo que imputamos el valor a los valores vacíos de la siguiente manera: se calcula la media de la división de las calorías entre el producto del tiempo de actividad por el ritmo cardíaco medio por cada tipo de actividad; posteriormente, se calcula el producto del tiempo de actividad por el ritmo cardíaco medio de las actividades de dicho tipo cuyas calorías son valores vacíos y se multiplica por el valor previamente calculado. El resultado es el valor imputado a los valores vacíos de cada actividad.
+
+```{r}
+for(i in levels(d$Tipo.de.actividad)){
+  index <- is.na(d$Calorías) & d$Tipo.de.actividad==i
+  if(sum(index)>0){
+    d$Calorías[index] <- as.integer(mean(d$Calorías[d$Tipo.de.actividad==i] / (period_to_seconds(d$Tiempo.en.movimiento[d$Tipo.de.actividad==i]) * d$Ritmo.cardiaco.promedio[d$Tipo.de.actividad==i]), na.rm=TRUE) * (period_to_seconds(d$Tiempo.en.movimiento[index]) * d$Ritmo.cardiaco.promedio[index]))
+  }
+}
+summary(d$Calorías)
+summary(d$Tipo.de.actividad[is.na(d$Calorías)])
+```
+
+Como solo hay una actividad de tipo *Natación*, no se puede imputar las calorías de la forma anterior. Por tanto, se lo imputaremos como si fuera una actividad de tipo *Carrera*, ya que el gasto calórico por unidad de tiempo y ritmo cardíaco es similar.
+
+```{r}
+i <- 'Carrera'
+index <- is.na(d$Calorías) & d$Tipo.de.actividad=='Natación'
+d$Calorías[index] <- as.integer(mean(d$Calorías[d$Tipo.de.actividad==i] / (period_to_seconds(d$Tiempo.en.movimiento[d$Tipo.de.actividad==i]) * d$Ritmo.cardiaco.promedio[d$Tipo.de.actividad==i]), na.rm=TRUE) * (period_to_seconds(d$Tiempo.en.movimiento[index]) * d$Ritmo.cardiaco.promedio[index]))
+summary(d$Calorías)
+summary(d$Tipo.de.actividad[is.na(d$Calorías)])
+```
+
+# **Análisis**
+
+## **Planificación**
+
+Realizaremos el estudio sobre las variables *Fecha.de.la.actividad.* y *Tiempo.en.movimiento* de las actividades de tipo *Bicicleta*, *Bicicleta virtual*, *Entrenamiento con pesas*, *Entrenamiento* y *Caminata*.
+
+```{r}
+b <- d$Tipo.de.actividad == 'Bicicleta'
+v <- d$Tipo.de.actividad == 'Bicicleta virtual'
+p <- d$Tipo.de.actividad == 'Entrenamiento con pesas'
+e <- d$Tipo.de.actividad == 'Entrenamiento'
+c <- d$Tipo.de.actividad == 'Caminata'
+```
+
+
+
+## **Normalidad y homocedasticidad**
+
+### ***Fecha.de.la.actividad***
+
+Vamos a analizar si la distribución de las actividades por cada tipo a lo largo del tiempo sigue una distribución normal. Las de tipo *Caminata* no las estudiaremos en este apartado debido a su corta acotación en el tiempo.
+
+```{r}
+xmin = min(c(min(d$Fecha.de.la.actividad[b]),
+         min(d$Fecha.de.la.actividad[v]),
+         min(d$Fecha.de.la.actividad[p]),
+         min(d$Fecha.de.la.actividad[e])))
+xmax = max(c(max(d$Fecha.de.la.actividad[b]),
+         max(d$Fecha.de.la.actividad[v]),
+         max(d$Fecha.de.la.actividad[p]),
+         max(d$Fecha.de.la.actividad[e])))
+ymax = max(c(max(aggregate(d$Fecha.de.la.actividad[b], by=list(month=as.numeric(format(d$Fecha.de.la.actividad[b], "%Y%m"))), FUN=length)['x']),
+             max(aggregate(d$Fecha.de.la.actividad[v], by=list(month=as.numeric(format(d$Fecha.de.la.actividad[v], "%Y%m"))), FUN=length)['x']),
+             max(aggregate(d$Fecha.de.la.actividad[p], by=list(month=as.numeric(format(d$Fecha.de.la.actividad[p], "%Y%m"))), FUN=length)['x']),
+             max(aggregate(d$Fecha.de.la.actividad[e], by=list(month=as.numeric(format(d$Fecha.de.la.actividad[e], "%Y%m"))), FUN=length)['x'])))
+
+hist(d$Fecha.de.la.actividad[b],
+     breaks = 'months',
+     main='Actividades por tipo y mes',
+     col=rgb(0,0,1,0.2),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[p],
+     breaks = 'months',
+     main='',
+     col=rgb(0,1,0,0.3),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[v],
+     breaks = 'months',
+     main='',
+     col=rgb(0,1,1,0.4),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[e],
+     breaks = 'months',
+     main='',
+     col=rgb(1,0,0,0.5),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+legend("topleft", legend=c("Bicicleta", "Entrenamiento con pesas", "Bicicleta virtual", "Entrenamiento"), col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3), rgb(0,1,1,0.4), rgb(1,0,0,0.5)), pt.cex=2, pch=15 )
+```
+
+Analizaremos la normalidad caso por caso.
+
+#### **Normalidad**
+
+##### *Bicicleta*
+
+```{r}
+hist(d$Fecha.de.la.actividad[b],
+     breaks = 'months',
+     main='Actividades de Bicicleta por mes',
+     col=rgb(0,0,1,0.2),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE)
+```
+
+Para estudiar la normalidad, emplearemos el ***test de Lilliefors***. Consiste en formular el siguiente contraste de hipótesis:
+
+**H~0~**: *Los datos siguen una distribución normal.*
+
+**H~1~**: *Los datos **no*** *siguen una distribución normal.*
+
+Para ello, tendremos que aplicar el test sobre la distribución temporal de las actividades según su tipo de la siguiente manera:
+
+```{r}
+nortest::lillie.test(as.numeric(d$Fecha.de.la.actividad[b])/24)
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución temporal de las actividades de tipo *Bicicleta* no sigue una distribución normal.**
+
+##### *Bicicleta virtual*
+
+```{r}
+hist(d$Fecha.de.la.actividad[v],
+     breaks = 'months',
+     main='Actividades de Bicicleta virtual por mes',
+     col=rgb(0,1,1,0.4),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE)
+```
+
+```{r}
+nortest::lillie.test(as.numeric(d$Fecha.de.la.actividad[v])/24)
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución temporal de las actividades de tipo *Bicicleta virtual* no sigue una distribución normal.**
+
+##### *Entrenamiento con pesas*
+
+```{r}
+hist(d$Fecha.de.la.actividad[p],
+     breaks = 'months',
+     main='Actividades de Entrenamiento con pesas por mes',
+     col=rgb(0,1,0,0.3),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE)
+```
+
+```{r}
+nortest::lillie.test(as.numeric(d$Fecha.de.la.actividad[p])/24)
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución temporal de las actividades de tipo *Entrenamiento con pesas* no sigue una distribución normal**
+
+##### *Entrenamiento*
+
+```{r}
+hist(d$Fecha.de.la.actividad[e],
+     breaks = 'months',
+     main='Actividades de Entrenamiento por mes',
+     col=rgb(1,0,0,0.5),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE)
+```
+
+```{r}
+nortest::lillie.test(as.numeric(d$Fecha.de.la.actividad[e])/24)
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución temporal de las actividades de tipo *Entrenamiento* no sigue una distribución normal.**
+
+#### **Homocedasticidad**
+
+##### *Bicicleta* & *Bicicleta virtual*
+
+```{r}
+hist(d$Fecha.de.la.actividad[b],
+     breaks = 'months',
+     main='Actividades por tipo y mes',
+     col=rgb(0,0,1,0.2),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[v],
+     breaks = 'months',
+     main='',
+     col=rgb(0,1,1,0.4),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+legend("topleft", legend=c("Bicicleta", "Bicicleta virtual"), col=c(rgb(0,0,1,0.2), rgb(0,1,1,0.4)), pt.cex=2, pch=15)
+```
+
+
+Para estudiar la homocedasticidad, emplearemos el ***F test***. Consiste en formular el siguiente contraste de hipótesis:
+
+**H~0~**: *$\sigma$$^{2}$~Bicicleta~ = $\sigma$$^{2}$~BicicletaVirtual~*
+
+**H~1~**: *$\sigma$$^{2}$~Bicicleta~ $\not=$ $\sigma$$^{2}$~BicicletaVirtual~*
+
+```{r}
+var.test(d$Fecha.de.la.actividad[b], d$Fecha.de.la.actividad[v])
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **las distribuciones temporales de las actividades *Bicicleta* y *Bicicleta virtual* tienen varianzas distintas.**
+
+##### *Bicicleta virtual* & *Entrenamiento con pesas*
+
+```{r}
+hist(d$Fecha.de.la.actividad[v],
+     breaks = 'months',
+     main='Actividades por tipo y mes',
+     col=rgb(0,1,1,0.4),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[p],
+     breaks = 'months',
+     main='',
+     col=rgb(0,1,0,0.3),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+legend("topleft", legend=c("Entrenamiento con pesas", "Bicicleta virtual"), col=c(rgb(0,1,0,0.3), rgb(0,1,1,0.4)), pt.cex=2, pch=15 )
+```
+
+
+```{r}
+var.test(d$Fecha.de.la.actividad[v], d$Fecha.de.la.actividad[p])
+```
+
+Como ***p-valor < 0.05***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **las distribuciones temporales de las actividades *Bicicleta virtual* y *Entrenamiento con pesas* tienen varianzas distintas.**
+
+##### *Entrenamiento con pesas* & *Entrenamiento*
+
+```{r}
+hist(d$Fecha.de.la.actividad[p],
+     breaks = 'months',
+     main='Actividades por tipo y mes',
+     col=rgb(0,1,0,0.3),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[e],
+     breaks = 'months',
+     main='',
+     col=rgb(1,0,0,0.5),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+legend("topleft", legend=c("Entrenamiento con pesas", "Entrenamiento"), col=c(rgb(0,1,0,0.3), rgb(1,0,0,0.5)), pt.cex=2, pch=15 )
+```
+
+
+```{r}
+var.test(d$Fecha.de.la.actividad[p], d$Fecha.de.la.actividad[e])
+```
+
+Como ***p-valor > 0.05***, no se puede rechazar la hipótesis nula. Por lo tanto, **las distribuciones temporales de las actividades *Entrenamiento con pesas* y *Entrenamiento* tienen varianzas iguales.**
+
+### ***Tiempo.en.movimiento***
+
+Para estudiar esta variable, utilizaremos las actividades de tipo *Bicicleta*, *Bicicleta virtual*, *Entrenamiento*, *Entrenamiento con pesas* y *Caminata*.
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[b]),
+        period_to_seconds(d$Tiempo.en.movimiento[c]),
+        period_to_seconds(d$Tiempo.en.movimiento[v]),
+        period_to_seconds(d$Tiempo.en.movimiento[e]),
+        period_to_seconds(d$Tiempo.en.movimiento[c]),
+     main='Actividades por tipo y duración',
+     col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3), rgb(0,1,1,0.4), rgb(1,0,0,0.5), rgb(1,0,1,0.6)),
+     ylab='Segundos')
+legend("topright", legend=c("Bicicleta", "Caminata", "Bicicleta virtual", "Entrenamiento", "Caminata"), col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3), rgb(0,1,1,0.4), rgb(1,0,0,0.5), rgb(1,0,1,0.6)), pt.cex=2, pch=15 )
+```
+
+Analizaremos la normalidad caso por caso.
+
+#### **Normalidad**
+
+##### *Bicicleta*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[b]),
+     main='Actividades de Bicicleta',
+     col=rgb(0,0,1,0.2),
+     ylab='Segundos')
+```
+
+```{r}
+nortest::lillie.test(period_to_seconds(d$Tiempo.en.movimiento[b]))
+```
+
+Como ***p-valor < 0.05***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución del tiempo efectivo de las actividades de tipo *Bicicleta* no sigue una distribución normal.**
+
+##### *Bicicleta virtual*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[v]),
+     main='Actividades de Bicicleta virtual',
+     col=rgb(0,1,1,0.4),
+     ylab='Segundos')
+```
+
+```{r}
+nortest::lillie.test(period_to_seconds(d$Tiempo.en.movimiento[v]))
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución del tiempo efectivo de las actividades de tipo *Bicicleta virtual* no sigue una distribución normal.**
+
+##### *Entrenamiento con pesas*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[p]),
+     main='Actividades de Entrenamiento con pesas',
+     col=rgb(0,1,0,0.3),
+     ylab='Segundos')
+```
+
+```{r}
+nortest::lillie.test(period_to_seconds(d$Tiempo.en.movimiento[p]))
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución del tiempo efectivo de las actividades de tipo *Entrenamiento con pesas* no sigue una distribución normal**
+
+##### *Entrenamiento*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[e]),
+     main='Actividades de Entrenamiento',
+     col=rgb(1,0,0,0.5),
+     ylab='Segundos')
+```
+
+```{r}
+nortest::lillie.test(period_to_seconds(d$Tiempo.en.movimiento[e]))
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución del tiempo efectivo de las actividades de tipo *Entrenamiento* no sigue una distribución normal.**
+
+##### *Caminata*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[c]),
+     main='Actividades de Caminata',
+     col=rgb(1,0,1,0.6),
+     ylab='Segundos')
+```
+
+```{r}
+nortest::lillie.test(period_to_seconds(d$Tiempo.en.movimiento[c]))
+```
+
+Como ***p-valor < 0.5***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **la distribución del tiempo efectivo de las actividades de tipo *Entrenamiento* no sigue una distribución normal.**
+
+#### **Homocedasticidad**
+
+##### *Bicicleta* & *Bicicleta virtual*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[b]), period_to_seconds(d$Tiempo.en.movimiento[v]),
+     main='Actividades por tipo y duración',
+     col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3)),
+     ylab='Km')
+legend("topright", legend=c("Bicicleta", "Bicicleta virtual"), col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3)), pt.cex=2, pch=15 )
+```
+
+```{r}
+var.test(period_to_seconds(d$Tiempo.en.movimiento[b]), period_to_seconds(d$Tiempo.en.movimiento[v]))
+```
+
+Como ***p-valor = 0***, se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **las distribuciones del tiempo efectivo de las actividades *Bicicleta* y *Bicicleta virtual* tienen varianzas distintas.**
+
+##### *Bicicleta virtual* & *Caminata*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[v]), period_to_seconds(d$Tiempo.en.movimiento[c]),
+     main='Actividades por tipo y duración',
+     col=c(rgb(0,1,0,0.3), rgb(1,0,1,0.6)),
+     ylab='Km')
+legend("topleft", legend=c("Bicicleta virtual", "Caminata"), col=c(rgb(0,1,0,0.3), rgb(1,0,1,0.6)), pt.cex=2, pch=15 )
+```
+
+
+```{r}
+var.test(period_to_seconds(d$Tiempo.en.movimiento[v]), period_to_seconds(d$Tiempo.en.movimiento[c]))
+```
+
+Como ***p-valor > 0.05***, no se puede rechazar con un 95% de confianza la hipótesis nula. Por lo tanto, **las distribuciones del tiempo efectivo de las actividades *Bicicleta virtual* y *Caminata* tienen varianzas iguales.**
+
+##### *Entrenamiento con pesas* & *Caminata*
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[p]), period_to_seconds(d$Tiempo.en.movimiento[c]),
+     main='Actividades por tipo y duración',
+     col=c(rgb(0,1,0,0.3), rgb(1,0,1,0.6)),
+     ylab='Km')
+legend("topleft", legend=c("Entrenamiento con pesas", "Caminata"), col=c(rgb(0,1,0,0.3), rgb(1,0,1,0.6)), pt.cex=2, pch=15 )
+```
+
+
+```{r}
+var.test(period_to_seconds(d$Tiempo.en.movimiento[p]), period_to_seconds(d$Tiempo.en.movimiento[c]))
+```
+
+Como ***p-valor > 0.05***, no se puede rechazar la hipótesis nula. Por lo tanto, **las distribuciones del tiempo efectivo de las actividades *Entrenamiento con pesas* y *Caminata* tienen varianzas iguales.**
+
+# **Resumen de las pruebas estadísticas**
+
+Se han realizado las siguientes pruebas estadísticas con los datos:
+
+- **Test de correlación de *Pearson*** y **regresión lineal**: La datos de la variable *calorías* no proceden directamente de ningún sensor, sino que se obtienen mediante un cálculo desconocido realizado por el ciclocomputador en base a otras variables. Para realizar la imputación de los valores vacíos de *Calorías*, hemos realizado un test de correlación entre ésta y el producto de dos variables: *Ritmo.cardíaco.promedio* y *Tiempo.en.movimiento*. El resultado mostraba un alto grado de correlación, por lo que construimos un modelo de regresión lineal para estimar e imputar los valores vacíos de *Calorías*.
+
+```{r}
+ratio <- period_to_seconds(d$Tiempo.en.movimiento[!is.na(d$Calorías)]) * d$Ritmo.cardiaco.promedio[!is.na(d$Calorías)]
+rl <- lm(d$Calorías[!is.na(d$Calorías)] ~ ratio)
+ypred <- rl$fitted.values
+plot(ratio,
+     d$Calorías[!is.na(d$Calorías)],
+     main = paste('Regresión lineal: Todos los tipos de actividades'),
+     xlab = '(Ritmo cardíaco * Tiempo en movimiento)',
+     ylab = 'Calorías',
+     pch = 19,
+     cex = .5,
+     col = 'light blue',
+     frame = FALSE)
+lines(ratio,
+      ypred,
+      lwd = 2,
+      col = 'orange')
+```
+
+
+- **Test de *Lilliefors***: Para estudiar si la distribución de las fechas y la duración de las variables seguía una distribución normal, hemos aplicado el test de normalidad de *Lilliefors* para las actividades de cada tipo, resultando en que ninguna de ellas seguía una distribución normal.
+
+```{r}
+hist(d$Fecha.de.la.actividad[b],
+     breaks = 'months',
+     main='Actividades por tipo y mes',
+     col=rgb(0,0,1,0.2),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xlab='Fecha',
+     ylab='Nº de actividades',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[p],
+     breaks = 'months',
+     main='',
+     col=rgb(0,1,0,0.3),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[v],
+     breaks = 'months',
+     main='',
+     col=rgb(0,1,1,0.4),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+hist(d$Fecha.de.la.actividad[e],
+     breaks = 'months',
+     main='',
+     col=rgb(1,0,0,0.5),
+     xlim=c(xmin, xmax), ylim=c(0,ymax),
+     xaxt='n',
+     xlab='',
+     ylab='',
+     freq=TRUE);par(new=TRUE)
+legend("topleft", legend=c("Bicicleta", "Entrenamiento con pesas", "Bicicleta virtual", "Entrenamiento"), col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3), rgb(0,1,1,0.4), rgb(1,0,0,0.5)), pt.cex=2, pch=15 )
+```
+
+```{r}
+boxplot(period_to_seconds(d$Tiempo.en.movimiento[b]),
+        period_to_seconds(d$Tiempo.en.movimiento[c]),
+        period_to_seconds(d$Tiempo.en.movimiento[v]),
+        period_to_seconds(d$Tiempo.en.movimiento[e]),
+        period_to_seconds(d$Tiempo.en.movimiento[c]),
+     main='Actividades por tipo y duración',
+     col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3), rgb(0,1,1,0.4), rgb(1,0,0,0.5), rgb(1,0,1,0.6)),
+     ylab='Segundos')
+legend("topright", legend=c("Bicicleta", "Caminata", "Bicicleta virtual", "Entrenamiento", "Caminata"), col=c(rgb(0,0,1,0.2), rgb(0,1,0,0.3), rgb(0,1,1,0.4), rgb(1,0,0,0.5), rgb(1,0,1,0.6)), pt.cex=2, pch=15 )
+```
+
+
+- **F test**: Para analizar la homogeneidad de las varianzas de las distribuciones de las fechas y la duración de las actividades de dos tipos distintos, hemos realizado este test de homocedasticidad para varios pares de diferentes tipos de actividades. Hemos hayado que las varianzas son iguales para las distribuciones temporales de las actividades de tipo *Entrenamiento con pesas* y *Entrenamiento*, y las distribucciones del tiempo efectivo de las de tipo *Entrenamiento con pesas* y *Caminata*, así como las de *Bicicleta virtual* y *Caminata*
+
+```{r}
+# F test entre las actividades de Entrenamiento con pesas y Entrenamiento por fecha
+var.test(d$Fecha.de.la.actividad[p], d$Fecha.de.la.actividad[e])
+
+# F test entre las actividades de Entrenamiento con pesas y Caminata por tiempo efectivo
+var.test(period_to_seconds(d$Tiempo.en.movimiento[p]), period_to_seconds(d$Tiempo.en.movimiento[c]))
+
+# F test entre las actividades de Bicicleta virtual y Caminata por tiempo efectivo
+var.test(period_to_seconds(d$Tiempo.en.movimiento[v]), period_to_seconds(d$Tiempo.en.movimiento[c]))
+```
+
+# **Guardar el dataset**
+
+```{r}
+write.csv(d,"ActivitiesClean.csv", row.names = FALSE)
+```
